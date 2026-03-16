@@ -1,0 +1,23 @@
+<!--
+  usb_camera_node.launch.xml
+
+  Launch the original CameraDriver as a standalone node.
+
+  Optional arguments:
+    camera_calibration_file   Path to ROS camera calibration YAML  [default: package config/camera.yaml]
+-->
+<launch>
+
+  <arg name="camera_calibration_file"
+       default="file://$(find-pkg-share usb_camera_driver)/config/camera.yaml"
+       description="Path to the camera calibration YAML (file:// URI or absolute path)"/>
+
+  <node pkg="usb_camera_driver"
+        exec="usb_camera_driver_node"
+        name="usb_camera_driver_node"
+        namespace="/camera"
+        output="screen">
+    <param name="camera_calibration_file" value="$(var camera_calibration_file)"/>
+  </node>
+
+</launch>

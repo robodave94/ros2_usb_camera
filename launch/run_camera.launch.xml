@@ -1,0 +1,73 @@
+<!--
+  run_camera.launch.xml
+
+  Launch the USB autodetect camera driver node.
+
+  Required argument:
+    pid_vid               VID:PID of the camera, e.g. "046d:085c"
+
+  Optional arguments:
+    serial_number         USB serial number (required when >1 device with same VID:PID)
+    camera_name           Camera name / frame_id / topic namespace  [default: "camera"]
+    calibration_file      Path to calibration YAML (file:// or absolute path)  [default: ""]
+    calibration_file_type "ros" or "cv"  [default: "ros"]
+    image_width           Capture width   [default: 1600]
+    image_height          Capture height  [default: 1200]
+    fps                   Target framerate [default: 50.0]
+    capture_backend       "any" | "v4l2" | "gstreamer" | "ffmpeg"  [default: "any"]
+    pixel_format          FOURCC override e.g. "MJPG" | "YUYV" | ""  [default: ""]
+
+  Topics published (under /<camera_name>/):
+    image_raw               sensor_msgs/Image
+    image_raw/compressed    (via image_transport compressed plugin)
+    image_raw/camera_info   sensor_msgs/CameraInfo
+-->
+<launch>
+
+  <!-- Required -->
+  <arg name="pid_vid"
+       description="USB VID:PID of the camera, e.g. 046d:085c"/>
+
+  <!-- Device selection -->
+  <arg name="serial_number"
+       default=""
+       description="USB serial number — required when multiple cameras share the same VID:PID"/>
+
+  <!-- Camera identity -->
+  <arg name="camera_name"
+       default="camera"
+       description="Camera name used as frame_id and topic namespace"/>
+
+  <!-- Calibration -->
+  <arg name="calibration_file"
+       default=""
+       description="Path to calibration YAML (file:// prefix or absolute path). Leave empty to run uncalibrated."/>
+  <arg name="calibration_file_type"
+       default="ros"
+       description="ros (camera_calibration_parsers format, *_calib_ros.yaml) or cv (OpenCV FileStorage, *_calib_cv.yaml)"/>
+
+  <!-- Capture settings -->
+  <arg name="image_width"    default="1600"  description="Capture frame width in pixels"/>
+  <arg name="image_height"   default="1200"  description="Capture frame height in pixels"/>
+  <arg name="fps"            default="50.0"  description="Target capture framerate"/>
+  <arg name="capture_backend" default="any"  description="OpenCV capture backend: any (auto), v4l2, gstreamer, ffmpeg"/>
+  <arg name="pixel_format"   default=""      description="FOURCC pixel format override, e.g. MJPG or YUYV. Leave empty for camera default."/>
+
+  <node pkg="usb_camera_driver"
+        exec="usb_camera_run_node"
+        name="usb_camera_run_driver"
+        namespace="$(var camera_name)"
+        output="screen">
+    <param name="pid_vid"               value="$(var pid_vid)"/>
+    <param name="serial_number"         value="$(var serial_number)"/>
+    <param name="camera_name"           value="$(var camera_name)"/>
+    <param name="calibration_file"      value="$(var calibration_file)"/>
+    <param name="calibration_file_type" value="$(var calibration_file_type)"/>
+    <param name="image_width"           value="$(var image_width)"/>
+    <param name="image_height"          value="$(var image_height)"/>
+    <param name="fps"                   value="$(var fps)"/>
+    <param name="capture_backend"       value="$(var capture_backend)"/>
+    <param name="pixel_format"          value="$(var pixel_format)"/>
+  </node>
+
+</launch>

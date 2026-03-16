@@ -1,3 +1,34 @@
 usb_camera_driver:
     ros__parameters: 
       camera_calibration_file: file://<absolut-path-for-now>
+
+# ── Per-camera parameter overrides ──────────────────────────────────────────
+# Pass this file to a run_camera node via:
+#   ros2 launch usb_camera_driver run_camera.launch.py \
+#       pid_vid:="046d:085c" params_file:=/path/to/config.yaml
+#
+# capture_backend options: "any" (default auto), "v4l2", "gstreamer", "ffmpeg"
+# pixel_format   options: "" (no override), "MJPG", "YUYV", "BGR3"
+#
+# Example — UC621 needs explicit MJPG to produce colour frames:
+#
+# usb_camera_run_driver:
+#   ros__parameters:
+#     pid_vid:          "046d:0892"
+#     serial_number:    "UC621"
+#     camera_name:      "camera"
+#     capture_backend:  "v4l2"
+#     pixel_format:     "MJPG"
+#     image_width:      1280
+#     image_height:     720
+#     fps:              30.0
+#
+# Example — generic webcam that works fine with defaults:
+#
+# usb_camera_run_driver:
+#   ros__parameters:
+#     pid_vid:          "046d:085c"
+#     camera_name:      "camera"
+#     capture_backend:  "any"
+#     pixel_format:     ""
+#     fps:              10.0

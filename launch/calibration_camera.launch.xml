@@ -1,0 +1,79 @@
+<!--
+  calibration_camera.launch.xml
+
+  Launch the one-shot USB camera calibration node.
+
+  The node opens the camera hardware directly (no topic subscription needed),
+  collects checkerboard detections, runs cv::calibrateCamera, and saves two files:
+    <serial>_calib_cv.yaml   — OpenCV FileStorage format
+    <serial>_calib_ros.yaml  — ROS camera_calibration_parsers format
+
+  Required argument:
+    pid_vid               USB VID:PID of the camera
+
+  Optional arguments:
+    serial_number         Required when >1 camera with identical VID:PID
+    calibration_output_dir  Directory to save calibration files  [default: "."]
+    checkerboard_rows     Inner corner rows   [default: 6]
+    checkerboard_cols     Inner corner cols   [default: 9]
+    square_size           Physical square size in metres  [default: 0.025]
+    num_frames            Frames to collect before calibrating  [default: 20]
+    image_width           Capture width   [default: 1600]
+    image_height          Capture height  [default: 1200]
+    capture_backend       "any" | "v4l2" | "gstreamer" | "ffmpeg"  [default: "any"]
+    pixel_format          FOURCC override e.g. "MJPG" | "YUYV" | ""  [default: ""]
+-->
+<launch>
+
+  <!-- Required -->
+  <arg name="pid_vid"
+       description="USB VID:PID of the camera, e.g. 046d:085c"/>
+
+  <!-- Device selection -->
+  <arg name="serial_number"
+       default=""
+       description="USB serial number — required when multiple cameras share the same VID:PID"/>
+
+  <!-- Calibration output -->
+  <arg name="calibration_output_dir"
+       default="."
+       description="Directory where calibration YAML files will be saved"/>
+
+  <!-- Checkerboard -->
+  <arg name="checkerboard_rows"
+       default="6"
+       description="Number of inner corner rows on the calibration checkerboard"/>
+  <arg name="checkerboard_cols"
+       default="9"
+       description="Number of inner corner columns on the calibration checkerboard"/>
+  <arg name="square_size"
+       default="0.025"
+       description="Physical size of one checkerboard square in metres"/>
+  <arg name="num_frames"
+       default="20"
+       description="Number of valid checkerboard frames to collect before calibrating"/>
+
+  <!-- Capture settings -->
+  <arg name="image_width"    default="1600"  description="Capture frame width in pixels"/>
+  <arg name="image_height"   default="1200"  description="Capture frame height in pixels"/>
+  <arg name="capture_backend" default="any"  description="OpenCV capture backend: any (auto), v4l2, gstreamer, ffmpeg"/>
+  <arg name="pixel_format"   default=""      description="FOURCC pixel format override, e.g. MJPG or YUYV. Leave empty for camera default."/>
+
+  <node pkg="usb_camera_driver"
+        exec="usb_camera_calibration_node"
+        name="usb_camera_calibration_driver"
+        output="screen">
+    <param name="pid_vid"                value="$(var pid_vid)"/>
+    <param name="serial_number"          value="$(var serial_number)"/>
+    <param name="calibration_output_dir" value="$(var calibration_output_dir)"/>
+    <param name="checkerboard_rows"      value="$(var checkerboard_rows)"/>
+    <param name="checkerboard_cols"      value="$(var checkerboard_cols)"/>
+    <param name="square_size"            value="$(var square_size)"/>
+    <param name="num_frames"             value="$(var num_frames)"/>
+    <param name="image_width"            value="$(var image_width)"/>
+    <param name="image_height"           value="$(var image_height)"/>
+    <param name="capture_backend"        value="$(var capture_backend)"/>
+    <param name="pixel_format"           value="$(var pixel_format)"/>
+  </node>
+
+</launch>

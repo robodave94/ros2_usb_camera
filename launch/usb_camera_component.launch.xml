@@ -1,0 +1,27 @@
+<!--
+  usb_camera_component.launch.xml
+
+  Launch the original CameraDriver as a composable node inside a component container.
+
+  Optional arguments:
+    camera_calibration_file   Path to ROS camera calibration YAML  [default: package config/camera.yaml]
+-->
+<launch>
+
+  <arg name="camera_calibration_file"
+       default="file://$(find-pkg-share usb_camera_driver)/config/camera.yaml"
+       description="Path to the camera calibration YAML (file:// URI or absolute path)"/>
+
+  <node_container name="usb_camera_driver_container"
+                  pkg="rclcpp_components"
+                  exec="component_container"
+                  namespace="/camera"
+                  output="screen">
+    <composable_node pkg="usb_camera_driver"
+                     plugin="usb_camera_driver::CameraDriver"
+                     name="usb_camera_driver_node">
+      <param name="camera_calibration_file" value="$(var camera_calibration_file)"/>
+    </composable_node>
+  </node_container>
+
+</launch>

@@ -2,14 +2,19 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>usb_camera_driver</name>
-  <version>0.1.1</version>
-  <description>Package containing a simple web camera setup</description>
+  <version>0.2.0</version>
+  <description>USB camera driver with autodetect, image_transport, and one-shot calibration</description>
   <maintainer email="ankl@kth.se">Andreas Klintberg</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>pkg-config</buildtool_depend>
 
+  <!-- system -->
+  <build_depend>libudev-dev</build_depend>
   <depend>libopencv-dev</depend>
+
+  <!-- ROS 2 -->
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
@@ -17,8 +22,10 @@
   <depend>image_transport</depend>
   <depend>camera_calibration_parsers</depend>
   <depend>camera_info_manager</depend>
-  <depend>serial</depend>
   <depend>launch_ros</depend>
+
+  <!-- image_transport plugins (compressed, theora, etc.) — exec only -->
+  <exec_depend>image_transport_plugins</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
 
