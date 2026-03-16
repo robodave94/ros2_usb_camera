@@ -5,7 +5,7 @@
  */
 
 #include "usb_camera_run_driver.hpp"
-#include "usb_device_detector.hpp"
+#include "serial/serial.h"
 
 #include <fstream>
 #include <sstream>
@@ -140,20 +140,20 @@ CameraRunDriver::CameraRunDriver(const rclcpp::NodeOptions & options)
 
 bool CameraRunDriver::detectDevice()
 {
-  uint16_t vid = 0, pid = 0;
+  // Find all /dev/videoN paths matching the VID:PID via serial-ros2
+  std::vector<std::string> paths;
   try {
-    UsbDeviceDetector::parseVidPid(pid_vid_, vid, pid);
-  } catch (const std::exception & e) {
-    RCLCPP_FATAL(this->get_logger(), "Failed to parse 'pid_vid': %s", e.what());
-    return false;
-  }
-
-  std::vector<DeviceMatch> matches;
-  try {
-    matches = UsbDeviceDetector::findVideoDevices(vid, pid);
+    paths = serial::findVideoDevicesByPIDVID(pid_vid_);
   } catch (const std::exception & e) {
     RCLCPP_FATAL(this->get_logger(), "USB device enumeration failed: %s", e.what());
     return false;
+  }
+
+  // Pair each path with its USB serial number
+  struct DevEntry { std::string device; std::string serial; };
+  std::vector<DevEntry> matches;
+  for (const auto & path : paths) {
+    matches.push_back({path, serial::getUSBSerialForVideoDevice(path)});
   }
 
   if (matches.empty()) {
@@ -163,18 +163,18 @@ bool CameraRunDriver::detectDevice()
   }
 
   if (matches.size() == 1) {
-    if (!serial_number_.empty() && matches[0].serial_number != serial_number_) {
+    if (!serial_number_.empty() && matches[0].serial != serial_number_) {
       RCLCPP_FATAL(this->get_logger(),
         "One device found (%s) but its serial number \"%s\" does not match "
         "the requested serial \"%s\"",
-        matches[0].device_node.c_str(),
-        matches[0].serial_number.c_str(),
+        matches[0].device.c_str(),
+        matches[0].serial.c_str(),
         serial_number_.c_str());
       return false;
     }
-    resolved_device_ = matches[0].device_node;
+    resolved_device_ = matches[0].device;
     RCLCPP_INFO(this->get_logger(), "Found device: %s  (serial: \"%s\")",
-      resolved_device_.c_str(), matches[0].serial_number.c_str());
+      resolved_device_.c_str(), matches[0].serial.c_str());
     return true;
   }
 
@@ -185,7 +185,7 @@ bool CameraRunDriver::detectDevice()
         << " but no serial_number was provided. Cannot disambiguate.\n"
         << "Found devices:\n";
     for (auto & m : matches) {
-      oss << "  " << m.device_node << "  serial=\"" << m.serial_number << "\"\n";
+      oss << "  " << m.device << "  serial=\"" << m.serial << "\"\n";
     }
     oss << "Re-launch with  -p serial_number:=<one of the above>  to select a device.";
     RCLCPP_FATAL(this->get_logger(), "%s", oss.str().c_str());
@@ -193,9 +193,9 @@ bool CameraRunDriver::detectDevice()
   }
 
   // Filter by serial
-  std::vector<DeviceMatch> filtered;
+  std::vector<DevEntry> filtered;
   for (auto & m : matches) {
-    if (m.serial_number == serial_number_) {
+    if (m.serial == serial_number_) {
       filtered.push_back(m);
     }
   }
@@ -205,15 +205,15 @@ bool CameraRunDriver::detectDevice()
         << "\" not found among the " << matches.size()
         << " devices matching VID:PID=" << pid_vid_ << ".\nFound serials:";
     for (auto & m : matches) {
-      oss << "\n  \"" << m.serial_number << "\" on " << m.device_node;
+      oss << "\n  \"" << m.serial << "\" on " << m.device;
     }
     RCLCPP_FATAL(this->get_logger(), "%s", oss.str().c_str());
     return false;
   }
 
-  resolved_device_ = filtered[0].device_node;
+  resolved_device_ = filtered[0].device;
   RCLCPP_INFO(this->get_logger(), "Found device: %s  (serial: \"%s\")",
-    resolved_device_.c_str(), filtered[0].serial_number.c_str());
+    resolved_device_.c_str(), filtered[0].serial.c_str());
   return true;
 }
 

@@ -8,11 +8,11 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>pkg-config</buildtool_depend>
 
-  <!-- system -->
-  <build_depend>libudev-dev</build_depend>
   <depend>libopencv-dev</depend>
+
+  <!-- Forked serial library: https://github.com/robodave94/serial-ros2.git -->
+  <depend>serial</depend>
 
   <!-- ROS 2 -->
   <depend>rclcpp</depend>

@@ -4,7 +4,7 @@
  */
 
 #include "usb_camera_calibration_driver.hpp"
-#include "usb_device_detector.hpp"
+#include "serial/serial.h"
 
 #include <filesystem>
 #include <sstream>
@@ -109,20 +109,20 @@ CameraCalibrationDriver::CameraCalibrationDriver(const rclcpp::NodeOptions & opt
 
 bool CameraCalibrationDriver::detectDevice()
 {
-  uint16_t vid = 0, pid = 0;
+  // Find all /dev/videoN paths matching the VID:PID via serial-ros2
+  std::vector<std::string> paths;
   try {
-    UsbDeviceDetector::parseVidPid(pid_vid_, vid, pid);
-  } catch (const std::exception & e) {
-    RCLCPP_FATAL(this->get_logger(), "Failed to parse 'pid_vid': %s", e.what());
-    return false;
-  }
-
-  std::vector<DeviceMatch> matches;
-  try {
-    matches = UsbDeviceDetector::findVideoDevices(vid, pid);
+    paths = serial::findVideoDevicesByPIDVID(pid_vid_);
   } catch (const std::exception & e) {
     RCLCPP_FATAL(this->get_logger(), "USB enumeration failed: %s", e.what());
     return false;
+  }
+
+  // Pair each path with its USB serial number
+  struct DevEntry { std::string device; std::string serial; };
+  std::vector<DevEntry> matches;
+  for (const auto & path : paths) {
+    matches.push_back({path, serial::getUSBSerialForVideoDevice(path)});
   }
 
   if (matches.empty()) {
@@ -132,18 +132,18 @@ bool CameraCalibrationDriver::detectDevice()
   }
 
   if (matches.size() == 1) {
-    if (!serial_number_.empty() && matches[0].serial_number != serial_number_) {
+    if (!serial_number_.empty() && matches[0].serial != serial_number_) {
       RCLCPP_FATAL(this->get_logger(),
         "Found device %s but serial \"%s\" != requested \"%s\"",
-        matches[0].device_node.c_str(),
-        matches[0].serial_number.c_str(),
+        matches[0].device.c_str(),
+        matches[0].serial.c_str(),
         serial_number_.c_str());
       return false;
     }
-    resolved_device_ = matches[0].device_node;
-    resolved_serial_ = matches[0].serial_number.empty()
-      ? (matches[0].vid + "_" + matches[0].pid)
-      : matches[0].serial_number;
+    resolved_device_ = matches[0].device;
+    resolved_serial_ = matches[0].serial.empty()
+      ? [this]{ std::string f = pid_vid_; auto p = f.find(':'); if (p != std::string::npos) f[p] = '_'; return f; }()
+      : matches[0].serial;
     RCLCPP_INFO(this->get_logger(), "Using device: %s (serial: \"%s\")",
       resolved_device_.c_str(), resolved_serial_.c_str());
     return true;
@@ -155,31 +155,31 @@ bool CameraCalibrationDriver::detectDevice()
     oss << matches.size() << " devices match VID:PID=" << pid_vid_
         << ", no serial_number set. Found:\n";
     for (auto & m : matches) {
-      oss << "  " << m.device_node << "  serial=\"" << m.serial_number << "\"\n";
+      oss << "  " << m.device << "  serial=\"" << m.serial << "\"\n";
     }
     oss << "Set -p serial_number:=<serial> to pick one.";
     RCLCPP_FATAL(this->get_logger(), "%s", oss.str().c_str());
     return false;
   }
 
-  std::vector<DeviceMatch> filtered;
+  std::vector<DevEntry> filtered;
   for (auto & m : matches) {
-    if (m.serial_number == serial_number_) filtered.push_back(m);
+    if (m.serial == serial_number_) filtered.push_back(m);
   }
   if (filtered.empty()) {
     std::ostringstream oss;
     oss << "Serial \"" << serial_number_ << "\" not found. Available:";
     for (auto & m : matches) {
-      oss << "\n  \"" << m.serial_number << "\" → " << m.device_node;
+      oss << "\n  \"" << m.serial << "\" → " << m.device;
     }
     RCLCPP_FATAL(this->get_logger(), "%s", oss.str().c_str());
     return false;
   }
 
-  resolved_device_ = filtered[0].device_node;
-  resolved_serial_ = filtered[0].serial_number.empty()
-    ? (filtered[0].vid + "_" + filtered[0].pid)
-    : filtered[0].serial_number;
+  resolved_device_ = filtered[0].device;
+  resolved_serial_ = filtered[0].serial.empty()
+    ? [this]{ std::string f = pid_vid_; auto p = f.find(':'); if (p != std::string::npos) f[p] = '_'; return f; }()
+    : filtered[0].serial;
   RCLCPP_INFO(this->get_logger(), "Using device: %s (serial: \"%s\")",
     resolved_device_.c_str(), resolved_serial_.c_str());
   return true;

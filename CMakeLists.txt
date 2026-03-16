@@ -21,14 +21,11 @@ find_package(camera_info_manager REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(camera_calibration_parsers REQUIRED)
 find_package(OpenCV 4 REQUIRED)
-
-# ─── System: libudev ──────────────────────────────────────────────────────────
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBUDEV REQUIRED libudev)
+# Forked serial library: https://github.com/robodave94/serial-ros2.git
+find_package(serial REQUIRED)
 
 include_directories(
   include
-  ${LIBUDEV_INCLUDE_DIRS}
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -50,27 +47,14 @@ target_link_libraries(usb_camera_driver_node usb_camera_driver)
 ament_target_dependencies(usb_camera_driver_node rclcpp)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 2.  usb_device_detector  (shared utility, links libudev)
-# ═══════════════════════════════════════════════════════════════════════════════
-add_library(usb_device_detector SHARED
-  src/usb_device_detector.cpp)
-target_include_directories(usb_device_detector
-  PUBLIC include ${LIBUDEV_INCLUDE_DIRS})
-target_link_libraries(usb_device_detector
-  ${LIBUDEV_LIBRARIES})
-ament_target_dependencies(usb_device_detector rclcpp)
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# 3.  usb_camera_run_driver  (autodetect + image_transport run node)
+# 2.  usb_camera_run_driver  (autodetect + image_transport run node)
 # ═══════════════════════════════════════════════════════════════════════════════
 add_library(usb_camera_run_driver SHARED
   src/usb_camera_run_driver.cpp)
 target_compile_definitions(usb_camera_run_driver
   PRIVATE "COMPOSITION_BUILDING_DLL")
-target_link_libraries(usb_camera_run_driver
-  usb_device_detector)
 ament_target_dependencies(usb_camera_run_driver
-  rclcpp rclcpp_components sensor_msgs std_msgs
+  rclcpp rclcpp_components sensor_msgs std_msgs serial
   camera_info_manager image_transport camera_calibration_parsers OpenCV)
 rclcpp_components_register_nodes(usb_camera_run_driver
   "usb_camera_driver::CameraRunDriver")
@@ -82,16 +66,14 @@ target_link_libraries(usb_camera_run_node
 ament_target_dependencies(usb_camera_run_node rclcpp)
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 4.  usb_camera_calibration_driver  (one-shot calibration node)
+# 3.  usb_camera_calibration_driver  (one-shot calibration node)
 # ═══════════════════════════════════════════════════════════════════════════════
 add_library(usb_camera_calibration_driver SHARED
   src/usb_camera_calibration_driver.cpp)
 target_compile_definitions(usb_camera_calibration_driver
   PRIVATE "COMPOSITION_BUILDING_DLL")
-target_link_libraries(usb_camera_calibration_driver
-  usb_device_detector)
 ament_target_dependencies(usb_camera_calibration_driver
-  rclcpp rclcpp_components sensor_msgs
+  rclcpp rclcpp_components sensor_msgs serial
   camera_calibration_parsers OpenCV)
 rclcpp_components_register_nodes(usb_camera_calibration_driver
   "usb_camera_driver::CameraCalibrationDriver")
@@ -107,7 +89,6 @@ ament_target_dependencies(usb_camera_calibration_node rclcpp)
 # ═══════════════════════════════════════════════════════════════════════════════
 install(TARGETS
   usb_camera_driver
-  usb_device_detector
   usb_camera_run_driver
   usb_camera_calibration_driver
   ARCHIVE DESTINATION lib
