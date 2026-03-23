@@ -124,6 +124,7 @@ CameraRunDriver::CameraRunDriver(const rclcpp::NodeOptions & options)
   }
   cap_.set(cv::CAP_PROP_FRAME_WIDTH,  static_cast<double>(image_width_));
   cap_.set(cv::CAP_PROP_FRAME_HEIGHT, static_cast<double>(image_height_));
+  cap_.set(cv::CAP_PROP_FPS,          fps_);
 
   // ── exposure control ──
   // OpenCV V4L2: 0.25 = manual, 0.75 = aperture-priority (auto)
@@ -407,15 +408,19 @@ CameraRunDriver::convertFrameToMessage(cv::Mat & frame)
 
 void CameraRunDriver::imageCallback()
 {
-  cap_ >> frame_;
-  if (frame_.empty()) return;
+  // grab() does a cheap V4L2 DQBUF without MJPEG decode — keeps the kernel
+  // queue drained so we always get the latest frame.
+  if (!cap_.grab()) return;
 
-  // Rate limiting
+  // Rate limiting — check BEFORE the expensive retrieve()/decode step.
   auto now = std::chrono::steady_clock::now();
   double elapsed_ms =
     std::chrono::duration_cast<std::chrono::milliseconds>(now - last_frame_).count();
   if (elapsed_ms < (1000.0 / fps_)) return;
   last_frame_ = now;
+
+  // retrieve() does the MJPEG decompress — only reached when we will publish.
+  if (!cap_.retrieve(frame_) || frame_.empty()) return;
 
   image_msg_ = convertFrameToMessage(frame_);
 
