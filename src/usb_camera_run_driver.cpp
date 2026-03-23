@@ -59,12 +59,16 @@ CameraRunDriver::CameraRunDriver(const rclcpp::NodeOptions & options)
   fps_                   = this->declare_parameter<double>("fps", 10.0);
   capture_backend_       = this->declare_parameter<std::string>("capture_backend", "any");
   pixel_format_          = this->declare_parameter<std::string>("pixel_format", "");
+  auto_exposure_             = this->declare_parameter<bool>("auto_exposure", true);
+  exposure_                  = this->declare_parameter<double>("exposure", -1.0);
+  auto_white_balance_        = this->declare_parameter<bool>("auto_white_balance", true);
+  white_balance_temperature_ = this->declare_parameter<double>("white_balance_temperature", -1.0);
 
   // ── validate pid_vid ──
   if (pid_vid_.empty()) {
     RCLCPP_FATAL(this->get_logger(),
       "Parameter 'pid_vid' is required but was not set. "
-      "Provide it as e.g. --ros-args -p pid_vid:=\"046d:085c\"");
+      "Provide it as e.g. --ros-args -p pid_vid:=\"0c45:6366\"");
     rclcpp::shutdown();
     return;
   }
@@ -120,6 +124,47 @@ CameraRunDriver::CameraRunDriver(const rclcpp::NodeOptions & options)
   }
   cap_.set(cv::CAP_PROP_FRAME_WIDTH,  static_cast<double>(image_width_));
   cap_.set(cv::CAP_PROP_FRAME_HEIGHT, static_cast<double>(image_height_));
+
+  // ── exposure control ──
+  // OpenCV V4L2: 0.25 = manual, 0.75 = aperture-priority (auto)
+  if (!cap_.set(cv::CAP_PROP_AUTO_EXPOSURE, auto_exposure_ ? 0.75 : 0.25)) {
+    RCLCPP_WARN(this->get_logger(),
+      "auto_exposure: CAP_PROP_AUTO_EXPOSURE not supported by this camera/backend — ignoring.");
+  } else if (!auto_exposure_) {
+    if (exposure_ >= 0.0) {
+      if (!cap_.set(cv::CAP_PROP_EXPOSURE, exposure_)) {
+        RCLCPP_WARN(this->get_logger(),
+          "exposure: CAP_PROP_EXPOSURE not supported by this camera/backend — ignoring.");
+      } else {
+        RCLCPP_INFO(this->get_logger(), "Manual exposure set to: %.1f", exposure_);
+      }
+    } else {
+      RCLCPP_WARN(this->get_logger(),
+        "auto_exposure=false but exposure=-1.0 (skip sentinel). "
+        "Set 'exposure' to a valid value to apply manual exposure.");
+    }
+  }
+
+  // ── white balance control ──
+  if (!cap_.set(cv::CAP_PROP_AUTO_WB, auto_white_balance_ ? 1.0 : 0.0)) {
+    RCLCPP_WARN(this->get_logger(),
+      "auto_white_balance: CAP_PROP_AUTO_WB not supported by this camera/backend — ignoring.");
+  } else if (!auto_white_balance_) {
+    if (white_balance_temperature_ >= 0.0) {
+      if (!cap_.set(cv::CAP_PROP_WB_TEMPERATURE, white_balance_temperature_)) {
+        RCLCPP_WARN(this->get_logger(),
+          "white_balance_temperature: CAP_PROP_WB_TEMPERATURE not supported by this camera/backend — ignoring.");
+      } else {
+        RCLCPP_INFO(this->get_logger(),
+          "Manual white balance temperature set to: %.0f K", white_balance_temperature_);
+      }
+    } else {
+      RCLCPP_WARN(this->get_logger(),
+        "auto_white_balance=false but white_balance_temperature=-1.0 (skip sentinel). "
+        "Set 'white_balance_temperature' to a value in Kelvin to apply manual WB.");
+    }
+  }
+
   RCLCPP_INFO(this->get_logger(), "Capture backend: %s", capture_backend_.c_str());
 
   // ── image_transport CameraPublisher ──

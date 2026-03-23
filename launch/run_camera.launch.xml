@@ -4,7 +4,7 @@
   Launch the USB autodetect camera driver node.
 
   Required argument:
-    pid_vid               VID:PID of the camera, e.g. "046d:085c"
+    pid_vid               VID:PID of the camera, e.g. "0c45:6366"
 
   Optional arguments:
     serial_number         USB serial number (required when >1 device with same VID:PID)
@@ -26,7 +26,7 @@
 
   <!-- Required -->
   <arg name="pid_vid"
-       description="USB VID:PID of the camera, e.g. 046d:085c"/>
+       description="USB VID:PID of the camera, e.g. 0c45:6366"/>
 
   <!-- Device selection -->
   <arg name="serial_number"
@@ -52,6 +52,10 @@
   <arg name="fps"            default="50.0"  description="Target capture framerate"/>
   <arg name="capture_backend" default="any"  description="OpenCV capture backend: any (auto), v4l2, gstreamer, ffmpeg"/>
   <arg name="pixel_format"   default=""      description="FOURCC pixel format override, e.g. MJPG or YUYV. Leave empty for camera default."/>
+  <arg name="auto_exposure"             default="true"  description="Enable camera auto-exposure. Set false to use manual exposure."/>
+  <arg name="exposure"                  default="-1.0"  description="Manual exposure value (used when auto_exposure=false; -1.0 = skip)."/>
+  <arg name="auto_white_balance"        default="true"  description="Enable camera auto white balance. Set false for manual WB."/>
+  <arg name="white_balance_temperature" default="-1.0"  description="Manual WB temperature in Kelvin (used when auto_white_balance=false; -1.0 = skip)."/>
 
   <node pkg="usb_camera_driver"
         exec="usb_camera_run_node"
@@ -68,6 +72,10 @@
     <param name="fps"                   value="$(var fps)"/>
     <param name="capture_backend"       value="$(var capture_backend)"/>
     <param name="pixel_format"          value="$(var pixel_format)"/>
+    <param name="auto_exposure"             value="$(var auto_exposure)"/>
+    <param name="exposure"                  value="$(var exposure)"/>
+    <param name="auto_white_balance"        value="$(var auto_white_balance)"/>
+    <param name="white_balance_temperature" value="$(var white_balance_temperature)"/>
   </node>
 
 </launch>

@@ -5,7 +5,7 @@ usb_camera_driver:
 # ── Per-camera parameter overrides ──────────────────────────────────────────
 # Pass this file to a run_camera node via:
 #   ros2 launch usb_camera_driver run_camera.launch.py \
-#       pid_vid:="046d:085c" params_file:=/path/to/config.yaml
+#       pid_vid:="0c45:6366" params_file:=/path/to/config.yaml
 #
 # capture_backend options: "any" (default auto), "v4l2", "gstreamer", "ffmpeg"
 # pixel_format   options: "" (no override), "MJPG", "YUYV", "BGR3"
@@ -27,7 +27,7 @@ usb_camera_driver:
 #
 # usb_camera_run_driver:
 #   ros__parameters:
-#     pid_vid:          "046d:085c"
+#     pid_vid:          "0c45:6366"
 #     camera_name:      "camera"
 #     capture_backend:  "any"
 #     pixel_format:     ""

@@ -4,7 +4,7 @@ run_camera.launch.py
 Launch the USB autodetect camera driver node.
 
 Required argument:
-  pid_vid               VID:PID of the camera, e.g. "046d:085c"
+  pid_vid               VID:PID of the camera, e.g. "0c45:6366"
 
 Optional arguments:
   serial_number         USB serial number (required when >1 device with same VID:PID)
@@ -31,7 +31,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'pid_vid',
-            description='USB VID:PID of the camera, e.g. "046d:085c"'),
+            description='USB VID:PID of the camera, e.g. "0c45:6366"'),
 
         DeclareLaunchArgument(
             'serial_number',

@@ -32,7 +32,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             'pid_vid',
-            description='USB VID:PID of the camera, e.g. "046d:085c"'),
+            description='USB VID:PID of the camera, e.g. "0c45:6366"'),
 
         DeclareLaunchArgument(
             'serial_number',

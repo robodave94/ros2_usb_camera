@@ -39,7 +39,7 @@ CameraCalibrationDriver::CameraCalibrationDriver(const rclcpp::NodeOptions & opt
 
   if (pid_vid_.empty()) {
     RCLCPP_FATAL(this->get_logger(),
-      "Parameter 'pid_vid' is required. Provide e.g. --ros-args -p pid_vid:=\"046d:085c\"");
+      "Parameter 'pid_vid' is required. Provide e.g. --ros-args -p pid_vid:=\"0c45:6366\"");
     rclcpp::shutdown();
     return;
   }

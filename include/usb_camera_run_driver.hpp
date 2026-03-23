@@ -39,6 +39,10 @@ private:
   double      fps_;
   std::string capture_backend_;  ///< "any" (default) | "v4l2" | "gstreamer"
   std::string pixel_format_;     ///< "" = no override | "MJPG" | "YUYV" | "BGR3" …
+  bool        auto_exposure_;              ///< true = camera auto-exposure; false = manual
+  double      exposure_;                   ///< manual exposure value (-1.0 = skip)
+  bool        auto_white_balance_;         ///< true = camera auto WB; false = manual
+  double      white_balance_temperature_;  ///< WB temperature in Kelvin (-1.0 = skip)
 
   // ─── state ───────────────────────────────────────────────────────────────
   std::string resolved_device_;  ///< /dev/videoN chosen after detection

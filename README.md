@@ -63,19 +63,19 @@ Finds the camera by VID:PID, loads calibration, and streams via `image_transport
 
 **Launch (recommended):**
 ```bash
-ros2 launch usb_camera_driver plaunch_run_camera.launch.py pid_vid:="046d:085c"
+ros2 launch usb_camera_driver plaunch_run_camera.launch.py pid_vid:="0c45:6366"
 ```
 
 **Direct node:**
 ```bash
-ros2 run usb_camera_driver usb_camera_run_node --ros-args -p pid_vid:="046d:085c"
+ros2 run usb_camera_driver usb_camera_run_node --ros-args -p pid_vid:="0c45:6366"
 ```
 
 **Parameters:**
 
 | Parameter | Default | Description |
 |---|---|---|
-| `pid_vid` | *(required)* | USB VID:PID string, e.g. `"046d:085c"`. Accepts uppercase, `0x`-prefixed, or plain lowercase hex. |
+| `pid_vid` | *(required)* | USB VID:PID string, e.g. `"0c45:6366"`. Accepts uppercase, `0x`-prefixed, or plain lowercase hex. |
 | `serial_number` | `""` | USB serial number string. Required only when multiple cameras share the same VID:PID. |
 | `camera_name` | `"camera"` | ROS topic namespace and `frame_id` |
 | `calibration_file` | `""` | Absolute path or `file://` URI to a calibration YAML. Leave empty to run uncalibrated. |
@@ -105,7 +105,7 @@ Opens the camera directly, collects checkerboard detections, runs `cv::calibrate
 
 ```bash
 ros2 launch usb_camera_driver plaunch_calibration_camera.launch.py \
-  pid_vid:="046d:085c" \
+  pid_vid:="0c45:6366" \
   calibration_output_dir:="/path/to/save" \
   checkerboard_rows:=6 \
   checkerboard_cols:=9 \
@@ -155,7 +155,7 @@ The node calls `rclcpp::shutdown()` immediately on any fatal detection error.
 
 ```bash
 lsusb
-# Bus 001 Device 004: ID 046d:085c Logitech, Inc. BRIO Ultra HD Webcam
+# Bus 001 Device 004: ID 0c45:6366 Logitech, Inc. BRIO Ultra HD Webcam
 ```
 
 The `ID` field is `VID:PID`. Pass it directly as the `pid_vid` parameter.
