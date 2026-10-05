@@ -38,6 +38,12 @@
        default="camera"
        description="Camera name used as frame_id and topic namespace"/>
 
+  <!-- Topic namespace, separate from camera_name so the frame_id can stay fixed while -->
+  <!-- the topics are relocated (e.g. a distributed Pi publishing under pi_camera/).    -->
+  <arg name="camera_namespace"
+       default="$(var camera_name)"
+       description="ROS namespace for the camera topics (defaults to camera_name)"/>
+
   <!-- Calibration -->
   <arg name="calibration_file"
        default=""
@@ -60,7 +66,7 @@
   <node pkg="usb_camera_driver"
         exec="usb_camera_run_node"
         name="usb_camera_run_driver"
-        namespace="$(var camera_name)"
+        namespace="$(var camera_namespace)"
         output="screen">
     <param name="pid_vid"               value="$(var pid_vid)"/>
     <param name="serial_number"         value="$(var serial_number)"/>
